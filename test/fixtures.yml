@@ -426,3 +426,7 @@ garanti:
   
 direc_pay:
   mid: 200904281000001
+
+qbms:
+  login: LOGIN
+  password: PASSWORD
