@@ -83,7 +83,17 @@ module ActiveMerchant
           raise ClientCertificateError, "The remote server did not accept the provided SSL certificate"
         rescue Timeout::Error, Errno::ETIMEDOUT => e
           raise ConnectionError, "The connection to the remote server timed out"
+        ensure
+          self.class.auditor.call(method.to_s.upcase, body, headers, result) if self.class.auditor
         end
+      end
+    end
+
+    superclass_delegating_accessor :auditor
+
+    class << self
+      def audits(&block)
+        self.auditor = block
       end
     end
     

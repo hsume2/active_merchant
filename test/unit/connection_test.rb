@@ -49,6 +49,33 @@ class ConnectionTest < Test::Unit::TestCase
     end
   end
   
+  def test_successful_post_request_logs_transaction
+    logs = []
+    ActiveMerchant::Connection.audits do |method, request_body, headers, result|
+      next unless result
+      logs << {
+        :method        => method,
+        :request_body  => request_body,
+        :headers       => headers,
+        :code          => result.code,
+        :message       => result.message,
+        :response_body => result.body
+      }
+    end
+    
+    Net::HTTP.any_instance.expects(:post).with('/tx.php', 'data', ActiveMerchant::Connection::RUBY_184_POST_HEADERS).returns(@ok)
+    response = @connection.request(:post, 'data', {})
+    assert_equal 'success', response.body
+    
+    logs.first.tap do |log|
+      assert_equal 'POST', log[:method]
+      assert_equal 'data', log[:request_body]
+      assert_equal Hash.new, log[:headers]
+      assert_equal 200, log[:code]
+      assert_equal 'OK', log[:message]
+      assert_equal 'success', log[:response_body]
+    end
+  end
 
   
   def test_default_read_timeout
